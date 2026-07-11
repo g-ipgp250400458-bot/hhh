@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misi Penyelamat Lautan Biru 🌊</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+    }
+    .title-font {
+      font-family: 'Fredoka One', cursive;
+    }
+    .shake-animation {
+      animation: shake 0.5s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .scale-up {
+      animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes scaleUp {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    /* Floating seaweed & bubbles effect */
+    .bubble {
+      animation: floatUp 4s ease-in infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(10px) translateX(0px); opacity: 0; }
+      50% { opacity: 0.8; }
+      100% { transform: translateY(-80px) translateX(5px); opacity: 0; }
+    }
+    .seaweed {
+      animation: wave 3s ease-in-out infinite alternate;
+      transform-origin: bottom center;
+    }
+    @keyframes wave {
+      0% { transform: rotate(-4deg); }
+      100% { transform: rotate(4deg); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 to-blue-100 min-h-screen flex flex-col justify-between overflow-x-hidden text-slate-800">
+
+  <!-- Top Navigation & Interactive Progress Bar -->
+  <header class="w-full max-w-4xl mx-auto px-4 pt-4 md:pt-6">
+    <div class="bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-md border border-blue-100/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl animate-bounce">🐢</span>
+        <div>
+          <h1 class="title-font text-blue-800 text-lg md:text-xl leading-none">Misi Penyelamat Lautan</h1>
+          <p class="text-xs text-blue-600 font-bold">Bantu bersihkan rumah hidupan marin!</p>
+        </div>
+      </div>
+      <!-- Progress steps indicator -->
+      <div class="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+        <div id="step-1-indicator" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-600 text-white shadow-sm transition-all duration-300">1</div>
+        <div class="w-6 h-1 bg-blue-200 rounded" id="line-1"></div>
+        <div id="step-2-indicator" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-white text-blue-400 border border-blue-200 transition-all duration-300">2</div>
+        <div class="w-6 h-1 bg-blue-200 rounded" id="line-2"></div>
+        <div id="step-3-indicator" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-white text-blue-400 border border-blue-200 transition-all duration-300">3</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Playground & Slide Container -->
+  <main class="flex-grow w-full max-w-4xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6 items-stretch justify-center">
+    
+    <!-- Left interactive ocean status map (Cleans up as user answers correctly) -->
+    <div class="w-full lg:w-2/5 bg-white/70 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-blue-100 flex flex-col justify-between items-center text-center relative overflow-hidden min-h-[250px] lg:min-h-0">
+      <div class="absolute inset-0 bg-gradient-to-t from-blue-50/50 to-transparent pointer-events-none"></div>
+      
+      <div class="relative z-10 w-full">
+        <span class="text-xs uppercase tracking-wider bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full">Keadaan Lautan Semasa</span>
+      </div>
+
+      <!-- Interactive SVG Ocean Map -->
+      <div class="w-full h-48 flex items-center justify-center relative z-10 my-4">
+        <svg viewBox="0 0 200 120" class="w-full h-full max-w-[280px]">
+          <!-- Ocean Background (Dynamic Water Layers) -->
+          <rect x="10" y="10" width="180" height="100" rx="15" fill="#bae6fd" />
+          <!-- Seabed Sand -->
+          <path d="M10,95 Q100,85 190,95 L190,110 L10,110 Z" fill="#EEDC82" />
+          
+          <!-- Animated Seaweed -->
+          <path d="M25,95 Q20,70 30,55 Q35,70 28,95" fill="#065f46" class="seaweed" />
+          <path d="M175,95 Q180,75 170,60 Q165,75 172,95" fill="#065f46" class="seaweed" />
+
+          <!-- Trash group (Initially visible, disappears as questions are answered correctly) -->
+          <g id="trash-group" class="transition-all duration-500 opacity-100">
+            <!-- Crumpled Plastic Bottle -->
+            <path d="M60,65 L75,60 L78,65 L63,70 Z" fill="#cbd5e1" opacity="0.9" stroke="#94a3b8" stroke-width="0.5"/>
+            <rect x="76" y="60" width="3" height="4" fill="#3b82f6" transform="rotate(15 76 60)" />
+            <!-- Plastic Bag floating -->
+            <path d="M120,45 Q125,40 135,45 Q140,55 130,58 Q120,55 120,45" fill="#f1f5f9" opacity="0.75" stroke="#cbd5e1" stroke-width="0.5"/>
+            <!-- Soda Can on seabed -->
+            <rect x="90" y="87" width="8" height="12" rx="1" fill="#ef4444" transform="rotate(35 90 87)" />
+          </g>
+
+          <!-- Coral Reefs (Initially dull grey/faded, blooms to beautiful colors after Q1) -->
+          <g id="coral-reef" class="transition-all duration-700 opacity-40">
+            <!-- Coral Left -->
+            <path d="M40,95 Q35,80 45,75 Q50,85 45,95" fill="#f43f5e" />
+            <path d="M45,95 Q55,80 50,75 Q42,85 43,95" fill="#ec4899" />
+            <!-- Coral Right -->
+            <path d="M150,95 Q145,85 152,80 Q158,88 153,95" fill="#f59e0b" />
+          </g>
+
+          <!-- Cute Happy Sea Turtle (Revealed in full colors after Q2) -->
+          <g id="happy-turtle" class="transition-all duration-700 opacity-0 transform translate-y-10 scale-0" style="transform-origin: 100px 55px;">
+            <!-- Flipper back -->
+            <ellipse cx="85" cy="58" rx="8" ry="4" fill="#047857" transform="rotate(-20 85 58)" />
+            <!-- Turtle Shell -->
+            <ellipse cx="100" cy="55" rx="16" ry="12" fill="#065f46" />
+            <ellipse cx="100" cy="55" rx="13" ry="9" fill="#10b981" />
+            <!-- Flipper front -->
+            <ellipse cx="115" cy="58" rx="12" ry="5" fill="#047857" transform="rotate(20 115 58)" />
+            <!-- Head -->
+            <circle cx="120" cy="45" r="6" fill="#059669" />
+            <circle cx="121" cy="43" r="1" fill="white" /> <!-- Eye -->
+          </g>
+
+          <!-- Magical Aquatic Bloom (Colorful fish & Bubbles - Revealed after Q3) -->
+          <g id="aquatic-bloom" class="transition-all duration-1000 opacity-0">
+            <!-- Little Yellow Fish -->
+            <path d="M55,35 Q65,30 70,35 L75,32 L75,38 L70,35 Z" fill="#eab308" />
+            <circle cx="58" cy="34" r="0.5" fill="black" />
+            <!-- Little Pink Fish -->
+            <path d="M140,25 Q130,20 125,25 L120,22 L120,28 L125,25 Z" fill="#ec4899" />
+            <circle cx="137" cy="24" r="0.5" fill="black" />
+            <!-- Bubbles SVG representation -->
+            <circle cx="100" cy="80" r="2" fill="white" opacity="0.6" class="bubble" />
+            <circle cx="110" cy="75" r="3" fill="white" opacity="0.4" class="bubble" />
+          </g>
+        </svg>
+      </div>
+
+      <div class="relative z-10">
+        <p id="ocean-status-text" class="text-sm font-bold text-slate-600 transition-colors duration-300">Lautan kotor dipenuhi plastik dan sampah berbahaya...</p>
+      </div>
+    </div>
+
+    <!-- Right Side: Interactive Question Slides Box -->
+    <div class="w-full lg:w-3/5 bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-blue-50 flex flex-col justify-between relative overflow-hidden">
+      <!-- Decor background water drops -->
+      <div class="absolute -right-10 -top-10 text-blue-50 text-9xl select-none opacity-40 pointer-events-none transform rotate-12">
+        <i class="fa-solid fa-droplet"></i>
+      </div>
+
+      <!-- Slide Inner Container (Switches dynamic questions) -->
+      <div id="quiz-container" class="relative z-10 flex-grow flex flex-col justify-center">
+        <!-- Questions injected here dynamically by JS -->
+      </div>
+
+      <!-- Feedback Area: Slides-in or reveals beautifully below choices -->
+      <div id="feedback-card" class="hidden mt-6 scale-up">
+        <div id="feedback-bg" class="rounded-2xl p-5 border flex items-start gap-4 transition-all duration-300">
+          <span id="feedback-icon" class="text-3xl mt-1 shrink-0"></span>
+          <div class="flex-grow">
+            <h4 id="feedback-title" class="title-font text-lg font-bold"></h4>
+            <p id="feedback-text" class="text-sm mt-1 text-slate-600 font-medium"></p>
+            <div class="mt-4 flex justify-end">
+              <button id="next-btn" onclick="handleNextStep()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 transform active:scale-95 text-sm">
+                <span>Teruskan</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cute Interactive Character Mascot at Footer -->
+  <footer class="w-full max-w-4xl mx-auto px-4 pb-6">
+    <div class="flex items-center justify-center gap-3 bg-blue-800 text-blue-50 rounded-2xl p-3 shadow-md">
+      <span class="text-2xl animate-bounce">🐬</span>
+      <p id="mascot-bubble" class="text-xs md:text-sm font-medium">Hai! Saya Cikgu Lumba-lumba. Mari bantu saya bersihkan lautan kesayangan kami daripada ancaman sampah!</p>
+    </div>
+  </footer>
+
+  <script>
+    // Audio synthesizer helper for fluid ocean aquatic sound effects
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      const now = audioCtx.currentTime;
+      
+      if (type === 'correct') {
+        // High sparkling bubble arpeggio
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(329.63, now); // E4
+        osc.frequency.setValueAtTime(392.00, now + 0.08); // G4
+        osc.frequency.setValueAtTime(523.25, now + 0.16); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.24); // E5
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } else if (type === 'wrong') {
+        // Low splash bubbly sound
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.25);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'click') {
+        // Soft bubble click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'victory') {
+        // Ocean magical victory fanfare
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+        osc.frequency.setValueAtTime(1318.51, now + 0.4); // E6
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        osc.start(now);
+        osc.stop(now + 0.8);
+      }
+    }
+
+    // Ocean quiz data (Direct entry questions)
+    const questions = [
+      {
+        question: "Apakah yang ada di laut?",
+        options: [
+          { key: "A", text: "Sampah", isCorrect: true },
+          { key: "B", text: "Mainan", isCorrect: false },
+          { key: "C", text: "Buku", isCorrect: false }
+        ],
+        guidance: {
+          correct: "Hebat dan tepat! Lautan kita kini dipenuhi dengan sampah plastik yang tidak sepatutnya berada di sana. Mari kita teruskan usaha membersihkannya!",
+          incorrect: "Cuba lihat lautan kita semula... Adakah manusia membuang permainan atau buku ke dalam air, atau adakah botol plastik dan tin minuman buruk yang hanyut?"
+        }
+      },
+      {
+        question: "Adakah membuang plastik ke laut betul?",
+        options: [
+          { key: "A", text: "Ya", isCorrect: false },
+          { key: "B", text: "Tidak", isCorrect: true }
+        ],
+        guidance: {
+          correct: "Luar biasa, jawapan anda betul! Membuang plastik ke laut adalah tindakan salah kerana ia boleh meracuni dan menjerat haiwan laut seperti penyu comel.",
+          incorrect: "Oh tidak! Fikirkan tentang haiwan laut. Adakah mereka boleh hidup dengan selamat jika kita mengotorkan tempat perlindungan dan tempat makan mereka dengan plastik?"
+        }
+      },
+      {
+        question: "Bagaimana kita boleh menjaga laut?",
+        options: [
+          { key: "A", text: "Buang sampah ke tong sampah", isCorrect: true },
+          { key: "B", text: "Buang plastik ke laut", isCorrect: false },
+          { key: "C", text: "Tinggalkan sampah di pantai", isCorrect: false }
+        ],
+        guidance: {
+          correct: "Syabas! Anda seorang wira hijau! Membuang sampah dengan betul ke dalam tong sampah menghalang sampah daripada hanyut ditiup angin ke lautan kita.",
+          incorrect: "Cuba renungkan... Jika kita membuang plastik ke laut atau membiarkannya bersepah di tepi pantai, adakah lautan kita akan kembali bersih dan selamat?"
+        }
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let hasAnsweredCorrectly = false;
+
+    // Direct entry into Q1 upon loading
+    window.onload = function() {
+      renderQuestion();
+    };
+
+    function renderQuestion() {
+      hasAnsweredCorrectly = false;
+      const quizContainer = document.getElementById("quiz-container");
+      const currentData = questions[currentQuestionIndex];
+
+      // Update progress lights
+      updateProgressIndicators();
+
+      // Hide feedback panel
+      document.getElementById("feedback-card").classList.add("hidden");
+
+      // Inject choices
+      quizContainer.innerHTML = `
+        <div class="scale-up">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-lg text-xs">Soalan ${currentQuestionIndex + 1} daripada 3</span>
+          </div>
+          <h2 class="title-font text-slate-800 text-2xl md:text-3xl font-bold mb-6">${currentData.question}</h2>
+          
+          <div class="space-y-3 md:space-y-4" id="options-grid">
+            ${currentData.options.map(opt => `
+              <button 
+                onclick="checkAnswer(this, ${opt.isCorrect}, '${opt.key}')" 
+                class="option-btn w-full text-left bg-slate-50 hover:bg-blue-50 border-2 border-slate-200/80 hover:border-blue-300 p-4 rounded-2xl flex items-center gap-4 transition-all duration-300 group shadow-sm hover:shadow-md transform active:scale-[0.99] relative"
+              >
+                <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-100/50 flex items-center justify-center font-bold text-slate-600 group-hover:text-blue-700 transition-colors shrink-0">
+                  ${opt.key}
+                </div>
+                <span class="font-semibold text-slate-700 text-base md:text-lg">${opt.text}</span>
+                <span class="absolute right-4 text-xl opacity-0 transform translate-x-2 transition-all duration-300 flex items-center gap-1" id="icon-${opt.key}"></span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect, key) {
+      playSound('click');
+      if (hasAnsweredCorrectly) return;
+
+      const allOptionButtons = document.querySelectorAll(".option-btn");
+      const currentData = questions[currentQuestionIndex];
+      const feedbackCard = document.getElementById("feedback-card");
+      const feedbackBg = document.getElementById("feedback-bg");
+      const feedbackIcon = document.getElementById("feedback-icon");
+      const feedbackTitle = document.getElementById("feedback-title");
+      const feedbackText = document.getElementById("feedback-text");
+      const mascotBubble = document.getElementById("mascot-bubble");
+
+      // Reset styles
+      allOptionButtons.forEach(btn => {
+        btn.classList.remove("border-blue-500", "bg-blue-50", "border-red-400", "bg-red-50", "shake-animation");
+        const iconContainer = btn.querySelector("[id^='icon-']");
+        iconContainer.className = "absolute right-4 text-xl opacity-0 transform translate-x-2 transition-all duration-300 flex items-center gap-1";
+        iconContainer.innerHTML = "";
+      });
+
+      if (isCorrect) {
+        playSound('correct');
+        hasAnsweredCorrectly = true;
+        
+        element.classList.add("border-blue-500", "bg-blue-50");
+        const icon = element.querySelector(`#icon-${key}`);
+        icon.innerHTML = `<i class="fa-solid fa-circle-check text-blue-500"></i>`;
+        icon.classList.remove("opacity-0", "translate-x-2");
+
+        // Confetti explosion
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.8 }
+        });
+
+        // Trigger marine restoration milestone
+        triggerOceanRestoration(currentQuestionIndex + 1);
+
+        // Show Success Card
+        feedbackCard.classList.remove("hidden");
+        feedbackBg.className = "rounded-2xl p-5 border border-blue-200 bg-blue-50 flex items-start gap-4 scale-up";
+        feedbackIcon.innerHTML = "🌊";
+        feedbackTitle.innerText = "Syabas! Jawapan Betul!";
+        feedbackTitle.className = "title-font text-lg font-bold text-blue-800";
+        feedbackText.innerText = currentData.guidance.correct;
+        feedbackText.className = "text-sm mt-1 text-blue-700 font-medium";
+
+        mascotBubble.innerHTML = "Wah, hebatnya! Sebahagian pencemaran telah dibersihkan dan lautan kini semakin bersinar! 🐬";
+
+      } else {
+        playSound('wrong');
+        element.classList.add("border-red-400", "bg-red-50", "shake-animation");
+        const icon = element.querySelector(`#icon-${key}`);
+        icon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500"></i>`;
+        icon.classList.remove("opacity-0", "translate-x-2");
+
+        // Show Guidance Hint Card
+        feedbackCard.classList.remove("hidden");
+        feedbackBg.className = "rounded-2xl p-5 border border-amber-200 bg-amber-50 flex items-start gap-4 scale-up";
+        feedbackIcon.innerHTML = "💡";
+        feedbackTitle.innerText = "Mari Cuba Lagi! Fikirkan Tentang Petunjuk Ini:";
+        feedbackTitle.className = "title-font text-lg font-bold text-amber-800";
+        feedbackText.innerText = currentData.guidance.incorrect;
+        feedbackText.className = "text-sm mt-1 text-amber-700 font-medium";
+
+        mascotBubble.innerHTML = "Sikit lagi! Cuba baca petunjuk di atas, kita pasti boleh memilih penyelesaian terbaik! 🐢";
+      }
+    }
+
+    function triggerOceanRestoration(stage) {
+      const trashGroup = document.getElementById("trash-group");
+      const coralReef = document.getElementById("coral-reef");
+      const happyTurtle = document.getElementById("happy-turtle");
+      const aquaticBloom = document.getElementById("aquatic-bloom");
+      const statusText = document.getElementById("ocean-status-text");
+
+      if (stage === 1) {
+        // Clean partial trash, bring colors back to corals
+        trashGroup.style.opacity = "0.5";
+        coralReef.classList.remove("opacity-40");
+        coralReef.classList.add("opacity-100");
+        statusText.innerText = "Lautan membaik: Terumbu karang mula hidup sihat semula!";
+        statusText.className = "text-sm font-bold text-blue-700";
+      } else if (stage === 2) {
+        // Almost clean, turtle swims back happily
+        trashGroup.style.opacity = "0.2";
+        happyTurtle.classList.remove("opacity-0", "scale-0", "translate-y-10");
+        happyTurtle.classList.add("opacity-100", "scale-100", "translate-y-0");
+        statusText.innerText = "Indah: Penyu comel berenang riang pulang ke rumah!";
+        statusText.className = "text-sm font-bold text-blue-700";
+      } else if (stage === 3) {
+        // Squeaky clean, fish swimming, bubbles rising!
+        trashGroup.style.opacity = "0";
+        aquaticBloom.classList.remove("opacity-0");
+        aquaticBloom.classList.add("opacity-100");
+        statusText.innerText = "Luar Biasa! Lautan kini bersih sepenuhnya, membiru, dan penuh kehidupan!";
+        statusText.className = "text-sm font-bold text-blue-800 animate-pulse";
+      }
+    }
+
+    function updateProgressIndicators() {
+      const s1 = document.getElementById("step-1-indicator");
+      const s2 = document.getElementById("step-2-indicator");
+      const s3 = document.getElementById("step-3-indicator");
+      const l1 = document.getElementById("line-1");
+      const l2 = document.getElementById("line-2");
+
+      s1.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-white text-blue-400 border border-blue-200 transition-all duration-300";
+      s2.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-white text-blue-400 border border-blue-200 transition-all duration-300";
+      s3.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-white text-blue-400 border border-blue-200 transition-all duration-300";
+      l1.className = "w-6 h-1 bg-blue-200 rounded";
+      l2.className = "w-6 h-1 bg-blue-200 rounded";
+
+      if (currentQuestionIndex === 0) {
+        s1.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-600 text-white shadow-md";
+      } else if (currentQuestionIndex === 1) {
+        s1.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-100 text-blue-700 border border-blue-300";
+        s2.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-600 text-white shadow-md";
+        l1.className = "w-6 h-1 bg-blue-600 rounded transition-all duration-500";
+      } else if (currentQuestionIndex === 2) {
+        s1.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-100 text-blue-700 border border-blue-300";
+        s2.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-100 text-blue-700 border border-blue-300";
+        s3.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-600 text-white shadow-md";
+        l1.className = "w-6 h-1 bg-blue-600 rounded";
+        l2.className = "w-6 h-1 bg-blue-600 rounded transition-all duration-500";
+      }
+    }
+
+    function handleNextStep() {
+      if (currentQuestionIndex < 2) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        showSuccessSummary();
+      }
+    }
+
+    function showSuccessSummary() {
+      playSound('victory');
+      
+      // Infinite splash of confetti
+      var duration = 3.5 * 1000;
+      var end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 60,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 60,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+
+      const quizContainer = document.getElementById("quiz-container");
+      document.getElementById("feedback-card").classList.add("hidden");
+
+      // Replace slide options with dynamic ocean graduation card
+      quizContainer.innerHTML = `
+        <div class="text-center py-6 scale-up">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 text-blue-600 text-5xl mb-6 animate-bounce">
+            🐳
+          </div>
+          <h2 class="title-font text-blue-800 text-3xl font-bold mb-4">Lautan Berjaya Diselamatkan!</h2>
+          <p class="text-slate-600 text-base md:text-lg mb-6 leading-relaxed">
+            Tahniah wira pintar! Melalui pemikiran tajam anda, lautan kini telah bebas sepenuhnya dari kekotoran plastik, terumbu karang hidup subur, dan hidupan marin akhirnya gembira!
+          </p>
+          <div class="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-2xl text-white shadow-lg max-w-sm mx-auto mb-6 transform hover:scale-105 transition-all">
+            <h3 class="text-sm uppercase tracking-wider font-bold opacity-90">Pencapaian Ekosistem</h3>
+            <div class="text-3xl font-extrabold my-1">3 / 3 Sempurna!</div>
+            <p class="text-xs opacity-80">Anda dianugerahkan pingat Pelindung Hidupan Laut!</p>
+          </div>
+          <button onclick="restartSlides()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-8 py-3 rounded-2xl shadow-md transition-all inline-flex items-center gap-2 transform active:scale-95">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+            <span>Main Semula</span>
+          </button>
+        </div>
+      `;
+
+      document.getElementById("mascot-bubble").innerHTML = "Terima kasih banyak-banyak! Sokongan anda sangat dihargai oleh seluruh hidupan lautan biru yang indah ini! ❤️";
+    }
+
+    function restartSlides() {
+      currentQuestionIndex = 0;
+      
+      const trashGroup = document.getElementById("trash-group");
+      const coralReef = document.getElementById("coral-reef");
+      const happyTurtle = document.getElementById("happy-turtle");
+      const aquaticBloom = document.getElementById("aquatic-bloom");
+      const statusText = document.getElementById("ocean-status-text");
+
+      trashGroup.style.opacity = "1";
+      coralReef.className = "transition-all duration-700 opacity-40";
+      happyTurtle.className = "transition-all duration-700 opacity-0 transform translate-y-10 scale-0";
+      aquaticBloom.className = "transition-all duration-1000 opacity-0";
+      statusText.innerText = "Lautan kotor dipenuhi plastik dan sampah berbahaya...";
+      statusText.className = "text-sm font-bold text-slate-600";
+
+      renderQuestion();
+      document.getElementById("mascot-bubble").innerHTML = "Hai! Saya Cikgu Lumba-lumba. Mari bantu saya bersihkan lautan kesayangan kami daripada ancaman sampah!";
+    }
+  </script>
+</body>
+</html>
